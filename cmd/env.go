@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -104,23 +105,27 @@ func envRun(cmd *cobra.Command, args []string) error {
 	}
 	role := strings.Split(roleARN, "/")[1]
 
-	fmt.Printf("export AWS_ACCESS_KEY_ID=%s\n", shellescape.Quote(creds.AccessKeyID))
-	fmt.Printf("export AWS_SECRET_ACCESS_KEY=%s\n", shellescape.Quote(creds.SecretAccessKey))
-	fmt.Printf("export AWS_OKTA_PROFILE=%s\n", shellescape.Quote(profile))
-	fmt.Printf("export AWS_OKTA_ASSUMED_ROLE_ARN=%s\n", shellescape.Quote(roleARN))
-	fmt.Printf("export AWS_OKTA_ASSUMED_ROLE=%s\n", shellescape.Quote(role))
+	if runtime.GOOS == "windows" {
+		fmt.Println("Hello from Windows")
+	} else {
+		fmt.Printf("export AWS_ACCESS_KEY_ID=%s\n", shellescape.Quote(creds.AccessKeyID))
+		fmt.Printf("export AWS_SECRET_ACCESS_KEY=%s\n", shellescape.Quote(creds.SecretAccessKey))
+		fmt.Printf("export AWS_OKTA_PROFILE=%s\n", shellescape.Quote(profile))
+		fmt.Printf("export AWS_OKTA_ASSUMED_ROLE_ARN=%s\n", shellescape.Quote(l))
+		fmt.Printf("export AWS_OKTA_ASSUMED_ROLE=%s\n", shellescape.Quote(role))
 
-	if region, ok := profiles[profile]["region"]; ok {
-		fmt.Printf("export AWS_DEFAULT_REGION=%s\n", shellescape.Quote(region))
-		fmt.Printf("export AWS_REGION=%s\n", shellescape.Quote(region))
+		if region, ok := profiles[profile]["region"]; ok {
+			fmt.Printf("export AWS_DEFAULT_REGION=%s\n", shellescape.Quote(region))
+			fmt.Printf("export AWS_REGION=%s\n", shellescape.Quote(region))
+		}
+
+		if creds.SessionToken != "" {
+			fmt.Printf("export AWS_SESSION_TOKEN=%s\n", shellescape.Quote(creds.SessionToken))
+			fmt.Printf("export AWS_SECURITY_TOKEN=%s\n", shellescape.Quote(creds.SessionToken))
+		}
+
+		fmt.Printf("export AWS_OKTA_SESSION_EXPIRATION=%d\n", p.GetExpiration().Unix())
 	}
-
-	if creds.SessionToken != "" {
-		fmt.Printf("export AWS_SESSION_TOKEN=%s\n", shellescape.Quote(creds.SessionToken))
-		fmt.Printf("export AWS_SECURITY_TOKEN=%s\n", shellescape.Quote(creds.SessionToken))
-	}
-
-	fmt.Printf("export AWS_OKTA_SESSION_EXPIRATION=%d\n", p.GetExpiration().Unix())
 
 	return nil
 }
